@@ -48,27 +48,27 @@ ProductManager — это демонстрационное веб-приложе
 
 # Структура проекта
 
-Project/
-├─ .idea/
-│  └─ Docker/
-├─ Tests/
-│  ├─ bin/
-│  └─ obj/
-└─ Web/
-   ├─ Controllers/
-   ├─ Data/
-   ├─ Models/
-   │  ├─ DTOs/
-   │  ├─ Entities/
-   │  └─ ViewModels/
-   ├─ Services/
-   ├─ Views/
-   │  ├─ Account/
-   │  ├─ Home/
-   │  └─ Shared/
-   └─ wwwroot/
-      ├─ css/
-      ├─ js/
-      └─ lib/
-         ├─ bootstrap/
-         └─ jquery/
+   Project/
+   ├─ .idea/
+   │  └─ Docker/
+   ├─ Tests/
+   │  ├─ bin/
+   │  └─ obj/
+   └─ Web/
+      ├─ Controllers/
+      ├─ Data/
+      ├─ Models/
+      │  ├─ DTOs/
+      │  ├─ Entities/
+      │  └─ ViewModels/
+      ├─ Services/
+      ├─ Views/
+      │  ├─ Account/
+      │  ├─ Home/
+      │  └─ Shared/
+      └─ wwwroot/
+         ├─ css/
+         ├─ js/
+         └─ lib/
+            ├─ bootstrap/
+            └─ jquery/
