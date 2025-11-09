@@ -103,7 +103,7 @@ public class ProductsApiController(IProductService productService) : ControllerB
         if (!ModelState.IsValid) 
             return BadRequest(ModelState);
         
-        var updateResult = await productService.UpdateAsync(new ProductFullDto(id, dto.Name, dto.Description, dto.Price), cancellationToken);
+        var updateResult = await productService.UpdateAsync(id, dto, cancellationToken);
         if (!updateResult)
             return NotFound();
 

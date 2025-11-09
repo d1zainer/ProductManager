@@ -49,14 +49,15 @@ public interface IProductService
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<ProductFullDto?> AddAsync(ProductCreateDto dto, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Обновить продукт в БД
     /// </summary>
+    /// <param name="id"></param>
     /// <param name="dto"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> UpdateAsync(ProductFullDto dto, CancellationToken cancellationToken = default);
+    Task<bool> UpdateAsync(Guid id, ProductUpdateDto dto, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Удалить продукт в БД
@@ -152,14 +153,14 @@ public class ProductService(
     }
 
     /// <inheritdoc />
-    public async Task<bool> UpdateAsync(ProductFullDto dto, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(Guid id, ProductUpdateDto dto, CancellationToken cancellationToken = default)
     {
         try
         {
-            var product = await dbContext.Products.FirstOrDefaultAsync(p => p.Id == dto.Id, cancellationToken);
+            var product = await dbContext.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
             if (product == null)
             {
-                logger.LogWarning("Update failed: Product with Id={Id} not found", dto.Id);
+                logger.LogWarning("Update failed: Product with Id={Id} not found", id);
                 return false;
             }
             product.Update(dto.Name, dto.Description, dto.Price);
