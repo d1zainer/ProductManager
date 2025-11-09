@@ -92,8 +92,7 @@ public class ProductsController(IProductService productService) : Controller
     public async Task<IActionResult> Edit(ProductFullDto dto)
     {
         var updateDto = new ProductUpdateDto(dto.Name, dto.Description, dto.Price);
-        if(!TryValidateModel(updateDto))
-            return View(dto);
+        if(!TryValidateModel(updateDto)) return View(dto);
         var cancellationToken =  HttpContext.RequestAborted;
         await productService.UpdateAsync(dto.Id, updateDto, cancellationToken);
         return RedirectToAction(nameof(Index));

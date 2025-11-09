@@ -7,7 +7,6 @@ using Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 if (builder.Environment.IsEnvironment("Test"))
 {
@@ -30,10 +29,10 @@ builder.Services.AddSwaggerGen(c =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
 });
-builder.Services.AddDistributedMemoryCache(); // кэш для сессий
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // время жизни сессии
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
@@ -66,7 +65,7 @@ using (var scope = app.Services.CreateScope())
             {
                 Console.WriteLine("Применяем миграции...");
                 await db.Database.MigrateAsync(); 
-                await DbSeeder.SeedAsync(db, true);
+                await DbSeeder.SeedAsync(db, true); //если false, то без сидирования
             }
             else
             {

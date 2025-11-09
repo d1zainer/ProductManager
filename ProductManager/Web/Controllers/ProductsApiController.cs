@@ -100,13 +100,9 @@ public class ProductsApiController(IProductService productService) : ControllerB
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] ProductUpdateDto dto, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) 
-            return BadRequest(ModelState);
-        
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         var updateResult = await productService.UpdateAsync(id, dto, cancellationToken);
-        if (!updateResult)
-            return NotFound();
-
+        if (!updateResult) return NotFound();
         return Ok(dto);
     }
 

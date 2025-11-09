@@ -37,8 +37,7 @@ public class ProductCreateDto
     [Range(0, 999_999_999_999_999.99, ErrorMessage = "Price must be between 0 and 999,999,999,999,999.99")]
     [Display(Name = "Price", Prompt = "0 - 999,999,999,999,999.99")]
     public decimal Price { get; set; }
-
-    // Пустой конструктор нужен для Model Binding
+    
     public ProductCreateDto() { }
 
     public ProductCreateDto(string name, string? description, decimal price)
