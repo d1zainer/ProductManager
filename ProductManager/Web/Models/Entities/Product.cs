@@ -20,7 +20,7 @@ public class Product
     [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; private set; }
 
-    private Product() { }   // EF Core-friendly
+    private Product() { }  
 
     /// <summary>
     /// Фабричный метод для создания продукта

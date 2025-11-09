@@ -34,7 +34,8 @@ public class ProductCreateDto
 
     public string? Description { get; set; }
 
-    [Range(0, 100000000, ErrorMessage = "Price must be non-negative")]
+    [Range(0, 999_999_999_999_999.99, ErrorMessage = "Price must be between 0 and 999,999,999,999,999.99")]
+    [Display(Name = "Price", Prompt = "0 - 999,999,999,999,999.99")]
     public decimal Price { get; set; }
 
     // Пустой конструктор нужен для Model Binding
@@ -68,7 +69,8 @@ public class ProductUpdateDto(string name, string? description, decimal price)
 
     public string? Description { get; init; } = description;
 
-    [Range(0, 100000, ErrorMessage = "Price must be non-negative")]
+    [Range(0, 999_999_999_999_999.99, ErrorMessage = "Price must be between 0 and 999,999,999,999,999.99")]
+    [Display(Name = "Price", Prompt = "0 - 999,999,999,999,999.99")]
     public decimal Price { get; init; } = price;
     
 }
