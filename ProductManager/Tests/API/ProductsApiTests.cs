@@ -85,7 +85,7 @@ public class ProductsApiTests(CustomWebApplicationFactory  factory) : IClassFixt
         createdProduct.Should().NotBeNull();
         createdProduct!.Name.Should().Be("Test Product");
         
-        var updateDto = new ProductFullDto(createdProduct.Id, "Updated Product", "Updated Desc", 888);
+        var updateDto = new ProductFullDto(createdProduct.Id, "Updated Product", "Updated Desc", 888, true);
         var putResponse = await _client.PutAsJsonAsync($"/api/products/{createdProduct.Id}", updateDto);
         putResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -124,15 +124,15 @@ public class ProductsApiTests(CustomWebApplicationFactory  factory) : IClassFixt
         var allProducts = await _client.GetFromJsonAsync<ProductListDto>("/api/products");
         var productId = allProducts!.Products.First().Id;
         
-        var invalidUpdate1 = new ProductUpdateDto("", "Some Desc", 100);
+        var invalidUpdate1 = new ProductUpdateDto("", "Some Desc", 100, false);
         var response1 = await _client.PutAsJsonAsync($"/api/products/{productId}", invalidUpdate1);
         response1.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         
-        var invalidUpdate2 = new ProductUpdateDto("Valid Name", "Desc", -50);
+        var invalidUpdate2 = new ProductUpdateDto("Valid Name", "Desc", -50,  false);
         var response2 = await _client.PutAsJsonAsync($"/api/products/{productId}", invalidUpdate2);
         response2.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         
-        var invalidUpdate3 = new ProductUpdateDto("", null, 0);
+        var invalidUpdate3 = new ProductUpdateDto("", null, 0, false);
         var response3 = await _client.PutAsJsonAsync($"/api/products/{productId}", invalidUpdate3);
         response3.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

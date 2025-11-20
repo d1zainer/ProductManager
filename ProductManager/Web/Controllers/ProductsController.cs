@@ -28,12 +28,13 @@ public class ProductsController(IProductService productService) : Controller
     {
         var cancellationToken = HttpContext.RequestAborted;
 
-        var (products, totalCount) = await productService.GetAllAsync(
-            sortBy: sortBy,
-            ascending: ascending,
-            page: page,
-            pageSize: pageSize,
-            cancellationToken: cancellationToken);
+        var (products, totalCount) = await productService.GetAllAsync( new ProductFilter()
+        {
+            Ascending = ascending,
+            Page = page,
+            PageSize = pageSize,
+            SortBy = sortBy,
+        },cancellationToken);
         
         var vm = new ProductListViewModel
         {
@@ -91,7 +92,7 @@ public class ProductsController(IProductService productService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(ProductFullDto dto)
     {
-        var updateDto = new ProductUpdateDto(dto.Name, dto.Description, dto.Price);
+        var updateDto = new ProductUpdateDto(dto.Name, dto.Description, dto.Price,  dto.IsActive);
         if(!TryValidateModel(updateDto)) return View(dto);
         var cancellationToken =  HttpContext.RequestAborted;
         await productService.UpdateAsync(dto.Id, updateDto, cancellationToken);
@@ -109,6 +110,24 @@ public class ProductsController(IProductService productService) : Controller
     {
         var cancellationToken = HttpContext.RequestAborted;
         await productService.DeleteAsync(id, cancellationToken);
+        return RedirectToAction(nameof(Index));
+    }
+    
+    
+    /// <summary>
+    /// Смена статуса продукта (выставить на продажу / снять с продажи)
+    /// </summary>
+    /// <param name="id">Id продукта</param>
+    /// <returns></returns>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(Guid id)
+    {
+        var cancellationToken = HttpContext.RequestAborted;
+        var product = await productService.GetByIdAsync(id, cancellationToken);
+        if (product == null) return NotFound();
+        bool newStatus = !product.IsActive;
+        await productService.UpdateStatusAsync(id, newStatus, cancellationToken);
         return RedirectToAction(nameof(Index));
     }
 }

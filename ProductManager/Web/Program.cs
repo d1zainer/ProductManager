@@ -1,26 +1,48 @@
+using System.Data;
 using System.Reflection;
+using Dapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Models;
+using Web.Repositories;
 using Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var useDapper = builder.Configuration.GetValue<bool>("UseDapper");
+
 builder.Services.AddControllersWithViews();
 if (builder.Environment.IsEnvironment("Test"))
 {
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseInMemoryDatabase("TestDb"));
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseInMemoryDatabase("TestDb"));
+        builder.Services.AddScoped<IProductService, ProductService>();
 }
 else
 {
-    builder.Services.AddDbContext<AppDbContext>(options =>
+    if (!useDapper)
     {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-        options.EnableSensitiveDataLogging();
-    });
-    
+        builder.Services.AddDbContext<AppDbContext>(options =>
+        {
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+            options.EnableSensitiveDataLogging();
+        });
+        builder.Services.AddScoped<IProductService, ProductService>();
+    }
+    else
+    {
+
+        builder.Services.AddScoped<IDbConnection>(sp =>
+        {
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            return new SqlConnection(connectionString); 
+        });
+        
+        builder.Services.AddScoped<IProductRepository, ProductSqlRepository>();
+        builder.Services.AddScoped<IProductService, ProductSqlService>();
+    }
 }
 
 builder.Services.AddSwaggerGen(c =>
@@ -39,9 +61,6 @@ builder.Services.AddSession(options =>
 builder.Services.Configure<AdminCredentials>(
     builder.Configuration.GetSection("AdminCredentials"));
 
-builder.Services.AddScoped<IProductService, ProductService>();
-
-
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -54,32 +73,108 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    if (!builder.Environment.IsEnvironment("Test"))
+    if (!useDapper)
     {
-        try
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        if (!builder.Environment.IsEnvironment("Test"))
         {
-            var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
-            if (pendingMigrations.Any())
+            try
             {
-                Console.WriteLine("Применяем миграции...");
-                await db.Database.MigrateAsync(); 
-                await DbSeeder.SeedAsync(db, true); //если false, то без сидирования
+                var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
+                if (pendingMigrations.Any())
+                {
+                    Console.WriteLine("Применяем миграции...");
+                    await db.Database.MigrateAsync();
+                    await DbSeeder.SeedAsync(db, false); //если false, то без сидирования
+                }
+                else
+                {
+                    Console.WriteLine("Все миграции уже применены.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Все миграции уже применены.");
+                Console.WriteLine($"Ошибка при миграции: {ex.Message}");
             }
         }
-        catch (Exception ex)
+    }
+    else
+    {
+        if (!builder.Environment.IsEnvironment("Test"))
         {
-            Console.WriteLine($"Ошибка при миграции: {ex.Message}");
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            var builderConn = new SqlConnectionStringBuilder(connectionString)
+            {
+                InitialCatalog = "master"
+            };
+
+            const int maxRetries = 10;
+            var delay = TimeSpan.FromSeconds(2);
+            
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    using var masterConn = new SqlConnection(builderConn.ConnectionString);
+                    await masterConn.OpenAsync();
+                    
+                    var createDbSql = @"
+        IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'ProductsDb')
+        BEGIN
+            CREATE DATABASE ProductsDb;
+        END";
+                    await masterConn.ExecuteAsync(createDbSql);
+                    break;
+                }
+                catch (SqlException)
+                {
+                    Console.WriteLine("SQL Server ещё не готов, жду 2 сек...");
+                    await Task.Delay(delay);
+                }
+
+            }
+            
+            builderConn.InitialCatalog = "ProductsDb";
+
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    using var conn = new SqlConnection(builderConn.ConnectionString);
+                    await conn.OpenAsync();
+                    
+                    // Создаём таблицу, если её нет
+                    var createTableSql = @"
+        IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='product' AND xtype='U')
+        BEGIN
+            CREATE TABLE product (
+                Id UNIQUEIDENTIFIER PRIMARY KEY,
+                Name NVARCHAR(255) NOT NULL,
+                Description NVARCHAR(MAX),
+                Price DECIMAL(18,2) NOT NULL,
+                IsActive BIT NOT NULL DEFAULT 0
+            );
+        END";
+                    await conn.ExecuteAsync(createTableSql);
+                    await DbSeeder.SeedAsync(conn, true);
+                    break; 
+                }
+                catch (SqlException)
+                {
+                    Console.WriteLine("ProductsDb ещё не готова, жду 2 сек...");
+                    await Task.Delay(delay);
+                }
+
+            }
+
+
         }
-        
 
     }
 }
+
+
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -116,5 +211,6 @@ app.MapControllerRoute(
 
 
 app.Run();
+
 
 public partial class Program { }

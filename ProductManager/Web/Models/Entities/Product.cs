@@ -19,6 +19,13 @@ public class Product
     [Required]
     [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; private set; }
+    
+    
+    /// <summary>
+    /// Показывает, выставлен ли товар
+    /// </summary>
+    [Required]
+    public bool IsActive { get; private set; } = false; 
 
     private Product() { }  
 
@@ -35,13 +42,32 @@ public class Product
             Name = dto.Name,
             Description = dto.Description,
             Price = dto.Price,
+            IsActive = dto.IsActive 
         };
     }
 
-    public void Update(string name, string? description, decimal price)
+    public void Update(string name, string? description, decimal price, bool isActive)
     {
         Name = name;
         Description = description;
         Price = price;
+        IsActive = isActive;
+    }
+
+    public static Product MapFromDto(Guid id, ProductUpdateDto dto)
+    {
+        return new Product
+        {
+            Id = id,
+            Name = dto.Name,
+            Description = dto.Description,
+            Price = dto.Price,
+            IsActive = dto.IsActive
+        };
+    }
+
+    public void UpdateStutus(bool status)
+    {
+        IsActive = status;
     }
 }

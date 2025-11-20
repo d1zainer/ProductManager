@@ -19,6 +19,7 @@ public class ProductsApiController(IProductService productService) : ControllerB
     /// <param name="minPrice"></param>
     /// <param name="maxPrice"></param>
     /// <param name="sortBy"></param>
+    /// <param name="active"></param>
     /// <param name="page"></param>
     /// <param name="pageSize"></param>
     /// <param name="ascending"></param>
@@ -29,6 +30,7 @@ public class ProductsApiController(IProductService productService) : ControllerB
         [FromQuery] decimal? minPrice,
         [FromQuery] decimal? maxPrice,
         [FromQuery] string? sortBy, 
+        [FromQuery] bool? active,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] bool ascending = true,
@@ -36,15 +38,18 @@ public class ProductsApiController(IProductService productService) : ControllerB
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 20 : pageSize;
-
-        var products = await productService.GetAllAsync(name, 
-            minPrice,
-            maxPrice,  
-            sortBy, 
-            ascending,
-            page,
-            pageSize,
-            cancellationToken);
+        
+        var products = await productService.GetAllAsync(new ProductFilter()
+        {
+            Name = name,
+            MaxPrice = maxPrice,
+            MinPrice = minPrice,
+            Ascending = ascending,
+            Page = page,
+            IsActive = active,
+            PageSize = pageSize,
+            SortBy = sortBy,
+        }, cancellationToken);
         return Ok(new ProductListDto(products.Item1,  products.Item2));
     }
 
@@ -106,4 +111,19 @@ public class ProductsApiController(IProductService productService) : ControllerB
         return Ok(dto);
     }
 
+    /// <summary>
+    /// Обновить статус активности продукта
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="isActive">Новый статус активности</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    /// <returns>204 NoContent если успешно, 404 если продукт не найден</returns>
+    [HttpPatch("{id:guid}/status")]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] bool isActive, CancellationToken cancellationToken = default)
+    {
+        var result = await productService.UpdateStatusAsync(id, isActive, cancellationToken);
+        if (!result) return NotFound();
+        return Ok();
+    }
+    
 }

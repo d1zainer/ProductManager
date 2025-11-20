@@ -6,6 +6,7 @@
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      - UseDapper=true
       - ConnectionStrings__DefaultConnection=Server=db;Database=ProductsDb;User Id=sa;Password=!Passw0rd;Encrypt=False;TrustServerCertificate=True;
     depends_on:
       - db

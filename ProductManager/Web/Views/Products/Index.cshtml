@@ -67,7 +67,16 @@
                     <input type="hidden" name="id" value="@p.Id" />
                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>
+
+                <form asp-action="ToggleStatus" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@p.Id" />
+                    <button type="submit" class="btn btn-sm @(p.IsActive ? "btn-warning" : "btn-primary")">
+                        @(p.IsActive ? "Снять с продажи" : "Выставить на продажу")
+                    </button>
+                </form>
             </td>
+            
         </tr>
     }
     </tbody>
